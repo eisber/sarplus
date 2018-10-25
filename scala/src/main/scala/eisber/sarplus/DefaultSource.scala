@@ -16,21 +16,21 @@ class DefaultSource extends FileFormat with DataSourceRegister {
     case _ => false
   }
 
-    override def shortName(): String = "sar"
+  override def shortName(): String = "sar"
 
   override def inferSchema(
       spark: SparkSession,
       options: Map[String, String],
       files: Seq[FileStatus]): Option[StructType] = {
-          return None // TODO: ?
+        return None // TODO: ?
     }
 
-   override def prepareWrite(
+  override def prepareWrite(
       spark: SparkSession,
       job: Job,
       options: Map[String, String],
       dataSchema: StructType): OutputWriterFactory = {
 
-       return new SARCacheOutputWriterFactory(dataSchema)
+      return new SARCacheOutputWriterFactory(dataSchema)
     }
 }
