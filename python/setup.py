@@ -16,7 +16,7 @@ class get_pybind_include(object):
 
 setup(
     name="pysarplus",
-    version="0.1",
+    version="0.1.1",
     description="SAR prediction for use with PySpark",
     url="https://github.com/eisber/sarplus",
     author="Markus Cozowicz",

@@ -1,4 +1,4 @@
-import pysar_cpp
+import pysarplus_cpp
 import os
 
 
@@ -24,7 +24,7 @@ class SARModel:
             return path + "/" + files[0]
 
         # instantiate C++ backend
-        SARModel.__model = self.model = pysar_cpp.SARModelCpp(find_or_raise(".sar"))
+        SARModel.__model = self.model = pysarplus_cpp.SARModelCpp(find_or_raise(".sar"))
         SARModel.__path = path
 
     def predict(self, items, ratings, top_k):

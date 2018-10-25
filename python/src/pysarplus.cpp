@@ -201,7 +201,7 @@ public:
     }
 };
 
-PYBIND11_MODULE(pysar_cpp, m) {
+PYBIND11_MODULE(pysarplus_cpp, m) {
     py::class_<item_score> sar_pred(m, "SARPrediction");
 
     sar_pred.def_property_readonly("id", &item_score::get_id);

@@ -4,8 +4,8 @@ sparkVersion := "2.3.0"
 
 spName := "eisber/sarplus"
 
-// organization := "eisber"
-// name := "sarplus"
+organization := "eisber"
+name := "sarplus"
 
 version := "0.1.8" 
 
@@ -13,7 +13,9 @@ sparkComponents ++= Seq("core", "sql")
 
 libraryDependencies ++= Seq(
   "commons-io" % "commons-io" % "2.6",
-  "com.google.guava" % "guava" % "25.0-jre"
+  "com.google.guava" % "guava" % "25.0-jre",
+  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
+  "org.scalamock" %% "scalamock" % "4.1.0" % "test"
 )
 
 // All Spark Packages need a license
@@ -24,9 +26,5 @@ credentials += Credentials(Path.userHome / ".ivy2" / ".sbtcredentials") // A fil
 
 spHomepage := "http://github.com/eisber/sarplus"
 
-// spAppendScalaVersion := true
-
 // If you published your package to Maven Central for this release (must be done prior to spPublish)
 spIncludeMaven := true
-
-// projectID := {ModuleID(organization.value, name.value, s"${version.value}-s_2.11")}

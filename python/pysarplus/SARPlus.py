@@ -203,9 +203,58 @@ class SARPlus:
 
         return spark.sql(query)
 
-    def recommend_k_items(self, test, top_k=10, remove_seen=True):
-        # TODO: use C++ backend... 
-        return 1
+    def recommend_k_items(self, test, cache_path, top_k=10, remove_seen=True, n_user_prediction_partitions=1000):
+        get_user_affinity(test).createOrReplaceTempView(self.f("{prefix}user_affinity"))
+
+        # create item id to continuous index mapping
+        spark.sql(self.prefix("SELECT i1, row_number() OVER(ORDER BY i1)-1 idx FROM (SELECT DISTINCT i1 FROM {prefix}item_similarity) CLUSTER BY i1"))\
+            .write.mode("overwrite").saveAsTable(self.f("{prefix}item_mapping"))
+
+        # map similarity matrix into index space
+        spark.sql(self.f("""
+            SELECT a.idx i1, b.idx i2, is.value
+            FROM {prefix}item_similarity is, {prefix}item_mapping a, {prefix}item_mapping b
+            WHERE is.i1 = a.i1 AND i2 = b.i1
+        """))\
+        .write.mode("overwrite").saveAsTable(self.f("{prefix}item_similarity_mapped"))
+
+        # export similarity matrix for C++ backed UDF
+        spark.sql(self.f("SELECT * FROM {prefix}item_similarity_mapped ORDER BY i1, i2"))\
+            .coalesce(1)\
+            .write.format("eisber.sarplus").mode("overwrite")\
+            .save(cache_path)
+
+        # map item ids to index space
+        pred_input = spark.sql("""
+            SELECT {col_user}, idx, rating
+            FROM 
+            (
+                SELECT {col_user}, b.idx, {col_rating} rating
+                FROM {prefix}user_affinity JOIN {prefix}item_mapping b ON {col_item} = b.i1 
+            )
+            CLUSTER BY {col_user}
+        """.format(**header))
+
+        schema = StructType([
+            StructField("itemID", IntegerType(), True),
+            StructField("score", FloatType(), True)
+        ])
+
+        # bridge to python/C++
+        @pandas_udf(schema, PandasUDFType.GROUPED_MAP)
+        def sar_predict_udf(df):
+            # Magic happening here
+            # The cache_path points to file write to by eisber.sarplus
+            # This has exactly the memory layout we need and since the file is
+            # memory mapped, the memory consumption only happens ones per worker
+            # for all python processes 
+            model = SARModel(cache_path)
+            preds = model.predict(df['idx'].values, df['rating'].values, top_k)
+        
+            return pd.DataFrame([(x.id, x.score) for x in preds], columns=[header['col_item'], header['col_rating']])
+        
+        return pred_input.repartition(n_user_prediction_partitions, header['col_user'])\
+               .groupby(header['col_user']).apply(sar_predict_udf)
         
     def recommend_k_items_slow(self, test, top_k=10, remove_seen=True):
         """Recommend top K items for all users which are in the test set.
