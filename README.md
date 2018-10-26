@@ -13,19 +13,46 @@ Features
 |---------|---------|-----------|---------|-------------|---------|
 | 2.5mio  | 35k     | 100mio    | 1.3h    | Databricks, 8 workers, [Azure Standard DS3 v2](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) | |
 
-# Jupyter Notebook Setup
+# Usage
 
-# Spark Setup
+```python
+import pandas as pd
+from pysarplus import SARPlus
 
-One must set the crossJoin property to enable calculation of the similarity matrix.
+# spark dataframe with user/item/rating/optional timestamp tuples
+train_df = spark.createDataFrame(
+      pd.DataFrame({
+        'user_id': [1, 1, 2, 3, 3],
+        'item_id': [1, 2, 1, 1, 3],
+        'rating':  [1, 1, 1, 1, 1],
+    }))
+   
+# spark dataframe with user/item tuples
+test_df = spark.createDataFrame(
+      pd.DataFrame({
+        'user_id': [1, 3],
+        'item_id': [1, 3],
+        'rating':  [1, 1],
+    }))
+    
+model = SARPlus(spark, col_user='user_id', col_item='item_id', col_rating='rating', col_timestamp='timestamp')
+model.fit(train_df, similarity_type='jaccard')
 
+model.recommend_k_items(test_df, 'sarplus_cache', top_k=3).show()
 ```
-spark.sql.crossJoin.enabled true
+
+# Jupyter Notebook
+
+# PySpark Shell
+
+```bash
+pip install pysarplus
+pyspark --packages eisber:sarplus:0.2.1 --conf spark.sql.crossJoin.enabled=true
 ```
 
-# Databricks Setup
+# Databricks
 
-One must set the crossJoin property to enable calculation of the similarity matrix.
+One must set the crossJoin property to enable calculation of the similarity matrix (Clusters / <Cluster> / Configuration / Spark Config)
 
 ```
 spark.sql.crossJoin.enabled true
@@ -59,6 +86,7 @@ On [Spark](https://spark.apache.org/) one can install all 3 components (C++, Pyt
 3. Upload the zipped Scala package to [Spark Package](https://spark-packages.org/) through a browser. [sbt spPublish](https://github.com/databricks/sbt-spark-package) has a few [issues](https://github.com/databricks/sbt-spark-package/issues/31) so it always fails for me. Don't use spPublishLocal as the packages are not created properly (names don't match up, [issue](https://github.com/databricks/sbt-spark-package/issues/17)) and furthermore fail to install if published to [Spark-Packages.org](https://spark-packages.org/).  
 
 ```bash
+cd scala
 sbt spPublish
 ```
 
@@ -68,7 +96,6 @@ To test the python UDF + C++ backend
 
 ```bash
 cd python 
-
 python setup.py install && pytest -s tests/
 ```
 
@@ -76,7 +103,6 @@ To test the Scala formatter
 
 ```bash
 cd scala
-
 sbt test
 ```
 
