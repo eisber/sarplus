@@ -107,3 +107,7 @@ sbt test
 ```
 
 (use ~test and it will automatically check for changes in source files, but not build.sbt)
+
+# Customer quotes
+* So f*** easy...
+
