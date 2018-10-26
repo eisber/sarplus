@@ -3,7 +3,10 @@ This is the one and only (to rule them all) implementation of SAR.
 """
 
 import pyspark.sql.functions as F
-from pyspark.sql.types import StringType, DoubleType, StructType, StructField
+import pandas as pd
+from pyspark.sql.types import StringType, DoubleType, StructType, StructField, IntegerType, FloatType
+from pyspark.sql.functions import pandas_udf, PandasUDFType
+from pysarplus import SARModel
 
 SIM_COOCCUR = "cooccurrence"
 SIM_JACCARD = "jaccard"
@@ -201,17 +204,17 @@ class SARPlus:
         """
         )
 
-        return spark.sql(query)
+        return self.spark.sql(query)
 
     def recommend_k_items(self, test, cache_path, top_k=10, remove_seen=True, n_user_prediction_partitions=1000):
-        get_user_affinity(test).createOrReplaceTempView(self.f("{prefix}user_affinity"))
+        self.get_user_affinity(test).createOrReplaceTempView(self.f("{prefix}user_affinity"))
 
         # create item id to continuous index mapping
-        spark.sql(self.prefix("SELECT i1, row_number() OVER(ORDER BY i1)-1 idx FROM (SELECT DISTINCT i1 FROM {prefix}item_similarity) CLUSTER BY i1"))\
+        self.spark.sql(self.f("SELECT i1, row_number() OVER(ORDER BY i1)-1 idx FROM (SELECT DISTINCT i1 FROM {prefix}item_similarity) CLUSTER BY i1"))\
             .write.mode("overwrite").saveAsTable(self.f("{prefix}item_mapping"))
 
         # map similarity matrix into index space
-        spark.sql(self.f("""
+        self.spark.sql(self.f("""
             SELECT a.idx i1, b.idx i2, is.value
             FROM {prefix}item_similarity is, {prefix}item_mapping a, {prefix}item_mapping b
             WHERE is.i1 = a.i1 AND i2 = b.i1
@@ -219,13 +222,13 @@ class SARPlus:
         .write.mode("overwrite").saveAsTable(self.f("{prefix}item_similarity_mapped"))
 
         # export similarity matrix for C++ backed UDF
-        spark.sql(self.f("SELECT * FROM {prefix}item_similarity_mapped ORDER BY i1, i2"))\
+        self.spark.sql(self.f("SELECT * FROM {prefix}item_similarity_mapped ORDER BY i1, i2"))\
             .coalesce(1)\
             .write.format("eisber.sarplus").mode("overwrite")\
             .save(cache_path)
 
         # map item ids to index space
-        pred_input = spark.sql("""
+        pred_input = self.spark.sql(self.f("""
             SELECT {col_user}, idx, rating
             FROM 
             (
@@ -233,12 +236,16 @@ class SARPlus:
                 FROM {prefix}user_affinity JOIN {prefix}item_mapping b ON {col_item} = b.i1 
             )
             CLUSTER BY {col_user}
-        """.format(**header))
+        """))
 
         schema = StructType([
+            StructField("userID", IntegerType(), True), # TODO: needs to be the same as col_user
             StructField("itemID", IntegerType(), True),
             StructField("score", FloatType(), True)
         ])
+
+        # make sure only the header is pickled
+        local_header = self.header
 
         # bridge to python/C++
         @pandas_udf(schema, PandasUDFType.GROUPED_MAP)
@@ -251,10 +258,33 @@ class SARPlus:
             model = SARModel(cache_path)
             preds = model.predict(df['idx'].values, df['rating'].values, top_k)
         
-            return pd.DataFrame([(x.id, x.score) for x in preds], columns=[header['col_item'], header['col_rating']])
+            user = df[local_header['col_user']].iloc[0]
+
+            # print("Markus")
+            # print(df)
+            # print("preds")
+
+            preds_ret = pd.DataFrame(
+                [(user, x.id, x.score) for x in preds],
+                columns=range(3))
+            # print(preds_ret)
+
+            return preds_ret
         
-        return pred_input.repartition(n_user_prediction_partitions, header['col_user'])\
-               .groupby(header['col_user']).apply(sar_predict_udf)
+        df_preds = pred_input\
+            .repartition(n_user_prediction_partitions, self.header['col_user'])\
+            .groupby(self.header['col_user'])\
+            .apply(sar_predict_udf)
+
+        # print(df_preds.show())
+
+        df_preds.createOrReplaceTempView(self.f("{prefix}predictions"))
+
+        return self.spark.sql(self.f("""
+        SELECT userID {col_user}, b.i1 {col_item}, score
+        FROM {prefix}predictions p, {prefix}item_mapping b
+        WHERE p.itemID = b.idx
+        """))
         
     def recommend_k_items_slow(self, test, top_k=10, remove_seen=True):
         """Recommend top K items for all users which are in the test set.
@@ -267,20 +297,19 @@ class SARPlus:
 
         # TODO: remove seen
 
-        user_affinity = self.get_user_affinity(test)
-        user_affinity.write.mode("overwrite").saveAsTable(
-            self.f("{prefix}user_affinity")
-        )
+        self.get_user_affinity(test)\
+            .write.mode("overwrite")\
+            .saveAsTable(self.f("{prefix}user_affinity"))
 
         # user_affinity * item_similarity
         # filter top-k
         query = self.f(
             """
-        SELECT userID, itemID, score
+        SELECT {col_user}, {col_item}, score
         FROM
         (
-          SELECT df.{col_user} userID,
-                 S.i2 itemID,
+          SELECT df.{col_user},
+                 S.i2 {col_item},
                  SUM(df.{col_rating} * S.value) AS score,
                  row_number() OVER(PARTITION BY {col_user} ORDER BY SUM(df.{col_rating} * S.value) DESC) rank
           FROM   
