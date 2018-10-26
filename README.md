@@ -48,7 +48,7 @@ Insert this cell prior to the code above.
 ```python
 import os
 
-SUBMIT_ARGS = "--packages eisber:sarplus:0.2.1 pyspark-shell"
+SUBMIT_ARGS = "--packages eisber:sarplus:0.2.2 pyspark-shell"
 os.environ["PYSPARK_SUBMIT_ARGS"] = SUBMIT_ARGS
 
 from pyspark.sql import SparkSession
@@ -68,7 +68,7 @@ spark = (
 
 ```bash
 pip install pysarplus
-pyspark --packages eisber:sarplus:0.2.1 --conf spark.sql.crossJoin.enabled=true
+pyspark --packages eisber:sarplus:0.2.2 --conf spark.sql.crossJoin.enabled=true
 ```
 
 ## Databricks
@@ -82,7 +82,7 @@ spark.sql.crossJoin.enabled true
 1. Navigate to your workspace 
 2. Create library
 3. Under 'Source' select 'Maven Coordinate'
-4. Enter eisber:sarplus:0.2.1
+4. Enter eisber:sarplus:0.2.2
 5. Hit 'Create Libbrary'
 
 This will install C++, Python and Scala code on your cluster.
@@ -128,7 +128,4 @@ sbt test
 ```
 
 (use ~test and it will automatically check for changes in source files, but not build.sbt)
-
-# Customer quotes
-* So f*** easy...
 
