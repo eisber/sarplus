@@ -38,7 +38,7 @@ On [Spark](https://spark.apache.org/) one can install all 3 components (C++, Pyt
 
 1. Package and publish the [pip package](python/setup.py) (see above)
 2. Package the [Spark package](scala/build.sbt), which includes the [Scala formatter](scala/src/main/scala/eisber/sarplus) and references the [pip package](scala/python/requirements.txt) (see below)
-3. Upload the zipped Scala package to [Spark Package](https://spark-packages.org/) through a browser. [sbt spPublish](https://github.com/databricks/sbt-spark-package) has a few [issues](https://github.com/databricks/sbt-spark-package/issues/31) so it always fails for me. Don't use spPublishLocal as the packages are not created properly (names don't match up, [issue](https://github.com/databricks/sbt-spark-package/issues/17)) and furthermore fail to install if published to spark-packages.org.  
+3. Upload the zipped Scala package to [Spark Package](https://spark-packages.org/) through a browser. [sbt spPublish](https://github.com/databricks/sbt-spark-package) has a few [issues](https://github.com/databricks/sbt-spark-package/issues/31) so it always fails for me. Don't use spPublishLocal as the packages are not created properly (names don't match up, [issue](https://github.com/databricks/sbt-spark-package/issues/17)) and furthermore fail to install if published to [Spark-Packages.org](https://spark-packages.org/).  
 
 ```bash
 sbt spPublish
