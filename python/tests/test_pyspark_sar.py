@@ -23,7 +23,7 @@ def spark(app_name="Sample", url="local[*]", memory="1G"):
     spark = (
         SparkSession.builder.appName(app_name)
         .master(url)
-        .config("spark.jars", os.path.dirname(__file__) + "/../../scala/target/scala-2.11/sarplus_2.11-0.1.8.jar")
+        .config("spark.jars", os.path.dirname(__file__) + "/../../scala/target/scala-2.11/sarplus_2.11-0.2.1.jar")
         .config("spark.driver.memory", memory)
         .config("spark.sql.shuffle.partitions", "1")
         .config("spark.sql.crossJoin.enabled", True)
@@ -72,7 +72,7 @@ def pandas_dummy_dataset(header):
 @pytest.mark.spark
 def test_good(spark, sample_cache):
     model = SARModel(sample_cache)
-    y = model.predict([0, 1], [10, 20], 10)
+    y = model.predict([0, 1], [10, 20], top_k=10, remove_seen=False)
 
     assert_compare(0, 5, y[0])
     assert_compare(1, 44, y[1])
@@ -81,7 +81,7 @@ def test_good(spark, sample_cache):
 @pytest.mark.spark
 def test_good_less(spark, sample_cache):
     model = SARModel(sample_cache)
-    y = model.predict([0, 2], [10, 3], 5)
+    y = model.predict([0, 2], [10, 3], top_k=5, remove_seen=False)
 
     assert_compare(0, 1, y[0])
     assert_compare(1, 11.6, y[1])
@@ -90,18 +90,28 @@ def test_good_less(spark, sample_cache):
 @pytest.mark.spark
 def test_good_require_sort(spark, sample_cache):
     model = SARModel(sample_cache)
-    y = model.predict([1, 0], [20, 10], 10)
+    y = model.predict([1, 0], [20, 10], top_k=10, remove_seen=False)
 
     assert_compare(0, 5, y[0])
     assert_compare(1, 44, y[1])
     assert_compare(2, 64, y[2])
+
+    assert 3 == len(y)
+
+@pytest.mark.spark
+def test_good_require_sort_remove_seen(spark, sample_cache):
+    model = SARModel(sample_cache)
+    y = model.predict([1, 0], [20, 10], top_k=10, remove_seen=True)
+
+    assert_compare(2, 64, y[0])
+    assert 1 == len(y)
 
 @pytest.mark.spark
 def test_pandas(spark, sample_cache):
     item_scores = pd.DataFrame([(0, 2.3), (1, 3.1)], columns=["itemID", "score"])
 
     model = SARModel(sample_cache)
-    y = model.predict(item_scores["itemID"].values, item_scores["score"].values, 10)
+    y = model.predict(item_scores["itemID"].values, item_scores["score"].values, top_k=10, remove_seen=False)
 
     assert_compare(0, 0.85, y[0])
     assert_compare(1, 6.9699, y[1])
@@ -130,7 +140,7 @@ def test_e2e(spark, pandas_dummy_dataset, header):
     print("slow")
     print(r1.show())
 
-    r2 = sar.recommend_k_items(test_df, "tests/test_e2e_cache", top_k=3, n_user_prediction_partitions=2)
+    r2 = sar.recommend_k_items(test_df, "tests/test_e2e_cache", top_k=3, n_user_prediction_partitions=2, remove_seen=False)
     print("fast")
     print(r2.show())
 

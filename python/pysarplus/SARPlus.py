@@ -275,7 +275,7 @@ class SARPlus:
             # memory mapped, the memory consumption only happens ones per worker
             # for all python processes 
             model = SARModel(cache_path_input)
-            preds = model.predict(df['idx'].values, df['rating'].values, top_k)
+            preds = model.predict(df['idx'].values, df['rating'].values, top_k, remove_seen)
         
             user = df[local_header['col_user']].iloc[0]
 

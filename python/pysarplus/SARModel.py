@@ -27,6 +27,6 @@ class SARModel:
         SARModel.__model = self.model = pysarplus_cpp.SARModelCpp(find_or_raise(".sar"))
         SARModel.__path = path
 
-    def predict(self, items, ratings, top_k):
-        return self.model.predict(items, ratings, top_k)
+    def predict(self, items, ratings, top_k, remove_seen):
+        return self.model.predict(items, ratings, top_k, remove_seen)
 

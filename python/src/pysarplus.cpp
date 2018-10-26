@@ -89,7 +89,7 @@ public:
     }
 
     // More improvements using buffer https://github.com/pybind/pybind11/blob/master/docs/advanced/pycpp/numpy.rst
-    std::vector<item_score> predict(std::vector<int32_t>& items_of_user, std::vector<float>& ratings, int32_t top_k) {
+    std::vector<item_score> predict(std::vector<int32_t>& items_of_user, std::vector<float>& ratings, int32_t top_k, bool remove_seen) {
         if (items_of_user.size() != ratings.size())
             throw std::domain_error("number of items and ratings must be equal");
 
@@ -107,6 +107,10 @@ public:
         std::sort(user_ratings.begin(), user_ratings.end(), item_score::id_compare);
 
         std::unordered_set<int32_t> seen_items;
+        if (remove_seen)
+            for (auto& item_id : items_of_user)
+                seen_items.insert(item_id);
+
         std::priority_queue<item_score, std::vector<item_score>, item_score::score_compare> top_k_items;
 
         // loop through items user has seen
