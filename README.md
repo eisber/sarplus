@@ -41,16 +41,37 @@ model.fit(train_df, similarity_type='jaccard')
 model.recommend_k_items(test_df, 'sarplus_cache', top_k=3).show()
 ```
 
-# Jupyter Notebook
+## Jupyter Notebook
 
-# PySpark Shell
+Insert this cell prior to the code above.
+
+```python
+import os
+
+SUBMIT_ARGS = "--packages eisber:sarplus:0.2.1 pyspark-shell"
+os.environ["PYSPARK_SUBMIT_ARGS"] = SUBMIT_ARGS
+
+from pyspark.sql import SparkSession
+
+spark = (
+    SparkSession.builder.appName("sample")
+    .master("local[*]")
+    .config("memory", "1G")
+    .config("spark.sql.shuffle.partitions", "1")
+    .config("spark.sql.crossJoin.enabled", True)
+    .config("spark.ui.enabled", False)
+    .getOrCreate()
+)
+```
+
+## PySpark Shell
 
 ```bash
 pip install pysarplus
 pyspark --packages eisber:sarplus:0.2.1 --conf spark.sql.crossJoin.enabled=true
 ```
 
-# Databricks
+## Databricks
 
 One must set the crossJoin property to enable calculation of the similarity matrix (Clusters / <Cluster> / Configuration / Spark Config)
 
