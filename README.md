@@ -43,3 +43,29 @@ On [Spark](https://spark.apache.org/) one can install all 3 components (C++, Pyt
 ```bash
 sbt spPublish
 ```
+
+# Jupyter Notebook Setup
+
+# Spark Setup
+
+One must set the crossJoin property to enable calculation of the similarity matrix.
+
+```
+spark.sql.crossJoin.enabled true
+```
+
+# Databricks Setup
+
+One must set the crossJoin property to enable calculation of the similarity matrix.
+
+```
+spark.sql.crossJoin.enabled true
+```
+
+1. Navigate to your workspace 
+2. Create library
+3. Under 'Source' select 'Maven Coordinate'
+4. Enter eisber:sarplus:0.2.1
+5. Hit 'Create Libbrary'
+
+This will install C++, Python and Scala code on your cluster.
