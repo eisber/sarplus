@@ -2,8 +2,8 @@
 pronounced sUrplus as it's simply better if not best!
 
 Features
-* Scalable PySpark based implementation
-* Fast C++ based prediction: 
+* Scalable PySpark based [implementation](python/pysarplus/SARPlus.py)
+* Fast C++ based [predictions](python/src/pysarplus.cpp)
 * Reduced memory consumption: similarity matrix cached in-memory once per worker, shared accross python executors 
 * Easy setup using [Spark Packages](https://spark-packages.org/package/eisber/sarplus)
 
