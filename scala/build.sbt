@@ -7,7 +7,7 @@ spName := "eisber/sarplus"
 organization := "eisber"
 name := "sarplus"
 
-version := "0.1.8" 
+version := "0.2.1" 
 
 sparkComponents ++= Seq("core", "sql")
 

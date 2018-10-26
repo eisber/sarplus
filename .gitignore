@@ -1,2 +1,5 @@
 
 python/tests/sample-output.sar
+**/__pycache__/**
+**/metastore_db
+**/.DS_Store

@@ -221,11 +221,17 @@ class SARPlus:
         """))\
         .write.mode("overwrite").saveAsTable(self.f("{prefix}item_similarity_mapped"))
 
+        cache_path_output = cache_path
+        if cache_path.startswith('dbfs:'):
+            cache_path_input = '/dbfs' + cache_path[5:]
+        else:
+            cache_path_input = cache_path
+
         # export similarity matrix for C++ backed UDF
         self.spark.sql(self.f("SELECT * FROM {prefix}item_similarity_mapped ORDER BY i1, i2"))\
             .coalesce(1)\
             .write.format("eisber.sarplus").mode("overwrite")\
-            .save(cache_path)
+            .save(cache_path_output)
 
         # map item ids to index space
         pred_input = self.spark.sql(self.f("""
@@ -255,19 +261,14 @@ class SARPlus:
             # This has exactly the memory layout we need and since the file is
             # memory mapped, the memory consumption only happens ones per worker
             # for all python processes 
-            model = SARModel(cache_path)
+            model = SARModel(cache_path_input)
             preds = model.predict(df['idx'].values, df['rating'].values, top_k)
         
             user = df[local_header['col_user']].iloc[0]
 
-            # print("Markus")
-            # print(df)
-            # print("preds")
-
             preds_ret = pd.DataFrame(
                 [(user, x.id, x.score) for x in preds],
                 columns=range(3))
-            # print(preds_ret)
 
             return preds_ret
         
