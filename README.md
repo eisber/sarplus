@@ -16,6 +16,22 @@ Features
 |---------|---------|-----------|---------|-------------|---------|
 | 2.5mio  | 35k     | 100mio    | 1.3h    | Databricks, 8 workers, [Azure Standard DS3 v2](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) | |
 
+# Top-K Recommendation Optimization
+
+There are a couple of key optimzations:
+
+* map item ids (e.g. strings) to a continuous set of indexes to optmize storage and simplify access
+* convert similarity matrix to exactly the representation the C++ component needs, thus enabling simple shared, memory mapping of the cache file and avoid parsing. This requires a customer formatter, written in Scala
+* shared read-only memory mapping allows us to re-use the same memory from multiple python executors on the same worker node
+* partition the input test users and past seen items by users, allowing for scale out
+* perform as much of the work as possible in PySpark (way simpler)
+* top-k computation
+** reverse the join by summing reverse joining the users past seen items with any related items
+** make sure to always just keep top-k items in-memory
+** use standard join using binary search between users past seen items and the related items
+
+![Image of sarplus top-k recommendation optimization](images/sarplus_udf.svg) 
+
 # Usage
 
 ```python
