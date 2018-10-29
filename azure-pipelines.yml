@@ -26,6 +26,7 @@ jobs:
     displayName: 'Install dependencies'
 
   - script: |
+      cd scala && sbt package
       cd python 
       python setup.py install
       pytest tests --doctest-modules --junitxml=junit/test-results.xml
