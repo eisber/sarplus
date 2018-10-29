@@ -1,6 +1,8 @@
 # sarplus
 pronounced sUrplus as it's simply better if not best!
 
+[![Build Status](https://dev.azure.com/marcozo-sarplus/sarplus/_apis/build/status/eisber.sarplus)](https://dev.azure.com/marcozo-sarplus/sarplus/_build/latest?definitionId=1)
+
 Features
 * Scalable PySpark based [implementation](python/pysarplus/SARPlus.py)
 * Fast C++ based [predictions](python/src/pysarplus.cpp)
