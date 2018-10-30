@@ -1,4 +1,4 @@
-# sarplus
+# sarplus (preview)
 pronounced sUrplus as it's simply better if not best!
 
 [![Build Status](https://dev.azure.com/marcozo-sarplus/sarplus/_apis/build/status/eisber.sarplus)](https://dev.azure.com/marcozo-sarplus/sarplus/_build/latest?definitionId=1)
