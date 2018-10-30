@@ -92,7 +92,7 @@ pyspark --packages eisber:sarplus:0.2.2 --conf spark.sql.crossJoin.enabled=true
 
 ## Databricks
 
-One must set the crossJoin property to enable calculation of the similarity matrix (Clusters / <Cluster> / Configuration / Spark Config)
+One must set the crossJoin property to enable calculation of the similarity matrix (Clusters / &lt; Cluster &gt; / Configuration / Spark Config)
 
 ```
 spark.sql.crossJoin.enabled true
@@ -102,7 +102,7 @@ spark.sql.crossJoin.enabled true
 2. Create library
 3. Under 'Source' select 'Maven Coordinate'
 4. Enter eisber:sarplus:0.2.2
-5. Hit 'Create Libbrary'
+5. Hit 'Create Library'
 
 This will install C++, Python and Scala code on your cluster.
 
