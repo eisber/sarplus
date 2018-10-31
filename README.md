@@ -101,8 +101,14 @@ spark.sql.crossJoin.enabled true
 1. Navigate to your workspace 
 2. Create library
 3. Under 'Source' select 'Maven Coordinate'
-4. Enter eisber:sarplus:0.2.2
+4. Enter 'eisber:sarplus:0.2.2'
 5. Hit 'Create Library'
+6. Attach to your cluster
+7. Create 2nd library
+8. Under 'Source' select 'Upload Python Egg or PyPI'
+9. Enter 'pysarplus'
+10. Hit 'Create Library'
+11. Enter 'pysarplus'
 
 This will install C++, Python and Scala code on your cluster.
 
