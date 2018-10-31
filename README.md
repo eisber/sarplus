@@ -14,7 +14,7 @@ Features
 
 | # Users | # Items | # Ratings | Runtime | Environment | Dataset | 
 |---------|---------|-----------|---------|-------------|---------|
-| 2.5mio  | 35k     | 100mio    | 1.3h    | Databricks, 8 workers, [Azure Standard DS3 v2](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) | |
+| 2.5mio  | 35k     | 100mio    | 1.3h    | Databricks, 8 workers, [Azure Standard DS3 v2](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) (4 core machines) | |
 
 # Top-K Recommendation Optimization
 
