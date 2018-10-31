@@ -14,11 +14,11 @@ Features
 
 | # Users | # Items | # Ratings | Runtime | Environment | Dataset | 
 |---------|---------|-----------|---------|-------------|---------|
-| 2.5mio  | 35k     | 100mio    | 1.3h    | Databricks, 8 workers, [Azure Standard DS3 v2](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) | |
+| 2.5mio  | 35k     | 100mio    | 1.3h    | Databricks, 8 workers, [Azure Standard DS3 v2](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) (4 core machines) | |
 
 # Top-K Recommendation Optimization
 
-There are a couple of key optimzations:
+There are a couple of key optimizations:
 
 * map item ids (e.g. strings) to a continuous set of indexes to optmize storage and simplify access
 * convert similarity matrix to exactly the representation the C++ component needs, thus enabling simple shared, memory mapping of the cache file and avoid parsing. This requires a customer formatter, written in Scala
@@ -57,7 +57,11 @@ test_df = spark.createDataFrame(
 model = SARPlus(spark, col_user='user_id', col_item='item_id', col_rating='rating', col_timestamp='timestamp')
 model.fit(train_df, similarity_type='jaccard')
 
+
 model.recommend_k_items(test_df, 'sarplus_cache', top_k=3).show()
+
+# For databricks
+# model.recommend_k_items(test_df, 'dbfs:/mnt/sarpluscache', top_k=3).show()
 ```
 
 ## Jupyter Notebook
@@ -101,10 +105,42 @@ spark.sql.crossJoin.enabled true
 1. Navigate to your workspace 
 2. Create library
 3. Under 'Source' select 'Maven Coordinate'
-4. Enter eisber:sarplus:0.2.2
+4. Enter 'eisber:sarplus:0.2.2'
 5. Hit 'Create Library'
+6. Attach to your cluster
+7. Create 2nd library
+8. Under 'Source' select 'Upload Python Egg or PyPI'
+9. Enter 'pysarplus'
+10. Hit 'Create Library'
+11. Enter 'pysarplus'
 
 This will install C++, Python and Scala code on your cluster.
+
+You'll also have to mount shared storage
+
+1. Create [Azure Storage Blob](https://ms.portal.azure.com/#create/Microsoft.StorageAccount-ARM)
+2. Create storage account (e.g. <yourcontainer>)
+3. Create container (e.g. sarpluscache)
+
+1. Navigate to User / User Settings
+2. Generate new token: enter 'sarplus'
+3. Use databricks shell (installation here)
+4. databricks configure --token
+4.1. Host: e.g. https://westus.azuredatabricks.net
+5. databricks secrets create-scope --scope all --initial-manage-principal users
+6. databricks secrets put --scope all --key sarpluscache
+6.1. enter Azure Storage Blob key of Azure Storage created before
+7. Run mount code
+
+
+```pyspark
+dbutils.fs.mount(
+  source = "wasbs://sarpluscache@<yourcontainer>.blob.core.windows.net",
+  mount_point = "/mnt/sarpluscache",
+  extra_configs = {"fs.azure.account.key.<yourcontainer>.blob.core.windows.net":dbutils.secrets.get(scope = "all", key = "sarpluscache")})
+```
+
+
 
 # Packaging
 
