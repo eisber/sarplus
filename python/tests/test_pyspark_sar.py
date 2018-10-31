@@ -23,7 +23,7 @@ def spark(app_name="Sample", url="local[*]", memory="1G"):
     spark = (
         SparkSession.builder.appName(app_name)
         .master(url)
-        .config("spark.jars", os.path.dirname(__file__) + "/../../scala/target/scala-2.11/sarplus_2.11-0.2.2.jar")
+        .config("spark.jars", os.path.dirname(__file__) + "/../../scala/target/scala-2.11/sarplus_2.11-0.2.3.jar")
         .config("spark.driver.memory", memory)
         .config("spark.sql.shuffle.partitions", "1")
         .config("spark.sql.crossJoin.enabled", True)
