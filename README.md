@@ -18,7 +18,7 @@ Features
 
 # Top-K Recommendation Optimization
 
-There are a couple of key optimzations:
+There are a couple of key optimizations:
 
 * map item ids (e.g. strings) to a continuous set of indexes to optmize storage and simplify access
 * convert similarity matrix to exactly the representation the C++ component needs, thus enabling simple shared, memory mapping of the cache file and avoid parsing. This requires a customer formatter, written in Scala
