@@ -1,6 +1,6 @@
 package eisber.sarplus
 
-import java.io.{DataOutputStream, FileInputStream, FileOutputStream, OutputStream}
+import java.io.{DataOutputStream, FileInputStream, FileOutputStream, BufferedOutputStream, OutputStream}
 
 import org.apache.hadoop.mapreduce.TaskAttemptContext
 import org.apache.spark.sql.execution.datasources.OutputWriter
@@ -24,8 +24,8 @@ class SARCacheOutputWriter(
   val pathRelated = path + ".related"
 
   // temporary output files
-  val tempOutputOffset = new LittleEndianDataOutputStream(new FileOutputStream(pathOffset))
-  val tempOutputRelated = new LittleEndianDataOutputStream(new FileOutputStream(pathRelated))
+  val tempOutputOffset = new LittleEndianDataOutputStream(new BufferedOutputStream(new FileOutputStream(pathOffset), 8*1024))
+  val tempOutputRelated = new LittleEndianDataOutputStream(new BufferedOutputStream(new FileOutputStream(pathRelated), 8*1024))
 
   // On databricks the above 2 files aren't copiedFinal
   val outputFinal = new LittleEndianDataOutputStream(outputStream)
