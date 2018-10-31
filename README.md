@@ -57,7 +57,11 @@ test_df = spark.createDataFrame(
 model = SARPlus(spark, col_user='user_id', col_item='item_id', col_rating='rating', col_timestamp='timestamp')
 model.fit(train_df, similarity_type='jaccard')
 
+
 model.recommend_k_items(test_df, 'sarplus_cache', top_k=3).show()
+
+# For databricks
+# model.recommend_k_items(test_df, 'dbfs:/mnt/sarpluscache', top_k=3).show()
 ```
 
 ## Jupyter Notebook
@@ -111,6 +115,32 @@ spark.sql.crossJoin.enabled true
 11. Enter 'pysarplus'
 
 This will install C++, Python and Scala code on your cluster.
+
+You'll also have to mount shared storage
+
+1. Create [Azure Storage Blob](https://ms.portal.azure.com/#create/Microsoft.StorageAccount-ARM)
+2. Create storage account (e.g. <yourcontainer>)
+3. Create container (e.g. sarpluscache)
+
+1. Navigate to User / User Settings
+2. Generate new token: enter 'sarplus'
+3. Use databricks shell (installation here)
+4. databricks configure --token
+4.1. Host: e.g. https://westus.azuredatabricks.net
+5. databricks secrets create-scope --scope all --initial-manage-principal users
+6. databricks secrets put --scope all --key sarpluscache
+6.1. enter Azure Storage Blob key of Azure Storage created before
+7. Run mount code
+
+
+```pyspark
+dbutils.fs.mount(
+  source = "wasbs://sarpluscache@<yourcontainer>.blob.core.windows.net",
+  mount_point = "/mnt/sarpluscache",
+  extra_configs = {"fs.azure.account.key.<yourcontainer>.blob.core.windows.net":dbutils.secrets.get(scope = "all", key = "sarpluscache")})
+```
+
+
 
 # Packaging
 
