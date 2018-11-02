@@ -112,7 +112,6 @@ spark.sql.crossJoin.enabled true
 8. Under 'Source' select 'Upload Python Egg or PyPI'
 9. Enter 'pysarplus'
 10. Hit 'Create Library'
-11. Enter 'pysarplus'
 
 This will install C++, Python and Scala code on your cluster.
 
