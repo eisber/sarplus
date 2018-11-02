@@ -139,6 +139,12 @@ dbutils.fs.mount(
   extra_configs = {"fs.azure.account.key.<accountname>.blob.core.windows.net":dbutils.secrets.get(scope = "all", key = "sarpluscache")})
 ```
 
+Disable annoying logging
+
+```pyspark
+import logging
+logging.getLogger("py4j").setLevel(logging.ERROR)
+```
 
 
 # Packaging
