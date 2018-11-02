@@ -134,9 +134,9 @@ You'll also have to mount shared storage
 
 ```pyspark
 dbutils.fs.mount(
-  source = "wasbs://sarpluscache@<yourcontainer>.blob.core.windows.net",
+  source = "wasbs://sarpluscache@<accountname>.blob.core.windows.net",
   mount_point = "/mnt/sarpluscache",
-  extra_configs = {"fs.azure.account.key.<yourcontainer>.blob.core.windows.net":dbutils.secrets.get(scope = "all", key = "sarpluscache")})
+  extra_configs = {"fs.azure.account.key.<accountname>.blob.core.windows.net":dbutils.secrets.get(scope = "all", key = "sarpluscache")})
 ```
 
 
