@@ -71,7 +71,7 @@ Insert this cell prior to the code above.
 ```python
 import os
 
-SUBMIT_ARGS = "--packages eisber:sarplus:0.2.2 pyspark-shell"
+SUBMIT_ARGS = "--packages eisber:sarplus:0.2.5 pyspark-shell"
 os.environ["PYSPARK_SUBMIT_ARGS"] = SUBMIT_ARGS
 
 from pyspark.sql import SparkSession
@@ -91,7 +91,7 @@ spark = (
 
 ```bash
 pip install pysarplus
-pyspark --packages eisber:sarplus:0.2.2 --conf spark.sql.crossJoin.enabled=true
+pyspark --packages eisber:sarplus:0.2.5 --conf spark.sql.crossJoin.enabled=true
 ```
 
 ## Databricks
@@ -105,7 +105,7 @@ spark.sql.crossJoin.enabled true
 1. Navigate to your workspace 
 2. Create library
 3. Under 'Source' select 'Maven Coordinate'
-4. Enter 'eisber:sarplus:0.2.4'
+4. Enter 'eisber:sarplus:0.2.5'
 5. Hit 'Create Library'
 6. Attach to your cluster
 7. Create 2nd library
