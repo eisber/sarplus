@@ -49,7 +49,7 @@ class SARPlus:
         self,
         df,
         similarity_type="jaccard",
-        time_decay_coefficient=False,
+        time_decay_coefficient=30,
         time_now=None,
         timedecay_formula=False,
         threshold=1,
@@ -64,6 +64,8 @@ class SARPlus:
         # threshold - items below this number get set to zero in coocurrence counts
         assert threshold > 0
 
+        df.createOrReplaceTempView("{prefix}df_train_input".format(**self.header))
+
         if timedecay_formula:
             # WARNING: previously we would take the last value in training dataframe and set it
             # as a matrix U element
@@ -76,10 +78,9 @@ class SARPlus:
             # Time T parameter is in days and input time is in seconds
             # so we do dt/60/(T*24*60)=dt/(T*24*3600)
             # the folling is the query which we want to run
-            df.createOrReplaceTempView("{prefix}df_train_input".format(**self.header))
 
             query = self.f(
-                """
+            """
             SELECT
                  {col_user}, {col_item}, 
                  SUM({col_rating} * EXP(-log(2) * (latest_timestamp - CAST({col_timestamp} AS long)) / ({time_decay_coefficient} * 3600 * 24))) as {col_rating}
@@ -87,13 +88,32 @@ class SARPlus:
                  (SELECT CAST(MAX({col_timestamp}) AS long) latest_timestamp FROM {prefix}df_train_input)
             GROUP BY {col_user}, {col_item} 
             CLUSTER BY {col_user} 
-             """,
+            """,
                 time_now=time_now,
                 time_decay_coefficient=time_decay_coefficient,
             )
 
             # replace with timedecayed version
             df = self.spark.sql(query)
+        else:
+            # since SQL is case insensitive, this check needs to be performed similar
+            if self.header['col_timestamp'].lower() in [s.name.lower() for s in df.schema]:
+                # we need to de-duplicate items by using the latest item
+                query = self.f(
+                """
+                SELECT {col_user}, {col_item}, {col_rating}
+                FROM
+                (
+                SELECT
+                    {col_user}, {col_item}, {col_rating}, 
+                    ROW_NUMBER() OVER (PARTITION BY {col_user}, {col_item} ORDER BY {col_timestamp} DESC) latest
+                FROM {prefix}df_train_input
+                )
+                WHERE latest = 1
+                """
+                )
+                
+                df = self.spark.sql(query)
 
         df.createOrReplaceTempView(self.f("{prefix}df_train"))
 
@@ -141,7 +161,7 @@ class SARPlus:
             self.item_similarity = self.spark.sql(query)
         elif similarity_type == SIM_LIFT:
             query = self.f(
-                """
+            """
             SELECT i1, i2, value / (M1.margin * M2.margin) AS value
             FROM {prefix}item_cooccurrence A 
                 INNER JOIN {prefix}item_marginal M1 ON A.i1 = M1.i 
@@ -163,7 +183,7 @@ class SARPlus:
         # expand upper triangular to full matrix
 
         query = self.f(
-            """
+        """
         SELECT i1, i2, value
         FROM
         (
@@ -205,7 +225,7 @@ class SARPlus:
         )
 
         query = self.f(
-            """
+        """
           SELECT a.{col_user}, a.{col_item}, CAST(a.{col_rating} AS double) {col_rating}
           FROM {prefix}df_train a INNER JOIN {prefix}df_test_users b ON a.{col_user} = b.{col_user} 
           DISTRIBUTE BY {col_user}
@@ -215,7 +235,7 @@ class SARPlus:
 
         return self.spark.sql(query)
 
-    def recommend_k_items(self, test, cache_path, top_k=10, remove_seen=True, n_user_prediction_partitions=1000):
+    def recommend_k_items(self, test, cache_path, top_k=10, remove_seen=True, n_user_prediction_partitions=200):
 
         # create item id to continuous index mapping
         log.info("sarplus.recommend_k_items 1/3: create item index")
@@ -239,7 +259,7 @@ class SARPlus:
         # export similarity matrix for C++ backed UDF
         log.info("sarplus.recommend_k_items 2/3: prepare similarity matrix")
 
-        self.spark.sql(self.f("SELECT * FROM {prefix}item_similarity_mapped ORDER BY i1, i2"))\
+        self.spark.sql(self.f("SELECT i1, i2, CAST(value AS DOUBLE) value FROM {prefix}item_similarity_mapped ORDER BY i1, i2"))\
             .coalesce(1)\
             .write.format("eisber.sarplus").mode("overwrite")\
             .save(cache_path_output)
@@ -258,7 +278,7 @@ class SARPlus:
         """))
 
         schema = StructType([
-            StructField("userID", IntegerType(), True), # TODO: needs to be the same as col_user
+            StructField("userID", pred_input.schema[self.header['col_user']].dataType, True), 
             StructField("itemID", IntegerType(), True),
             StructField("score", FloatType(), True)
         ])
@@ -292,8 +312,6 @@ class SARPlus:
             .groupby(self.header['col_user'])\
             .apply(sar_predict_udf)
 
-        # print(df_preds.show())
-
         df_preds.createOrReplaceTempView(self.f("{prefix}predictions"))
 
         return self.spark.sql(self.f("""
@@ -306,12 +324,14 @@ class SARPlus:
         """Recommend top K items for all users which are in the test set.
 
         Args:
-            test: indexed test Spark dataframe
+            test: test Spark dataframe
             top_k: top n items to return
             remove_seen: remove items test users have already seen in the past from the recommended set.
         """
 
         # TODO: remove seen
+        if remove_seen:
+            raise ValueError("Not implemented")
 
         self.get_user_affinity(test)\
             .write.mode("overwrite")\
