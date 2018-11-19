@@ -33,7 +33,7 @@ def spark(app_name="Sample", url="local[*]", memory="1G"):
         .config("spark.default.parallelism", "1")
         .config("spark.sql.crossJoin.enabled", True)
         .config("spark.ui.enabled", False)
-        .config("spark.eventLog.enabled", True)
+        # .config("spark.eventLog.enabled", True) # only for local debugging, breaks on build server
         .getOrCreate()
     )
 
