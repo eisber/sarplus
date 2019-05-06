@@ -1,6 +1,6 @@
 scalaVersion := "2.11.8"
 
-sparkVersion := "2.3.0"
+sparkVersion := sys.env.get("sparkversion").getOrElse("2.3.0")
 
 spName := "eisber/sarplus"
 
@@ -9,7 +9,7 @@ name := "sarplus"
 
 version := "0.2.5" 
 
-sparkComponents ++= Seq("core", "sql")
+sparkComponents ++= Seq("core", "sql", "mllib")
 
 libraryDependencies ++= Seq(
   "commons-io" % "commons-io" % "2.6",
